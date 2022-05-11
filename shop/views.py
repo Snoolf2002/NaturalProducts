@@ -1,11 +1,10 @@
-from itertools import product
 from django.db import transaction
 
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.decorators import action
 from rest_framework import status
 from rest_framework.response import Response
-from rest_framework import filters, serializers
+from rest_framework import filters
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.pagination import PageNumberPagination
 
@@ -99,6 +98,9 @@ class ProductViewSet(ModelViewSet):
         
         return Response(serializer.data)
 
+    def get_queryset(self):
+        return Product.objects.all()
+
     def perform_create(self, serializer):
         user = self.request.user
 
@@ -150,6 +152,7 @@ class OrderListViewSet(ModelViewSet):
     def create(self, request, *args, **kwargs):
         orders = request.data
         user = self.request.user
+        total_payment = 0
 
         if user:
             list_order = []
@@ -160,11 +163,14 @@ class OrderListViewSet(ModelViewSet):
                     user = MyUser.objects.get(id = user.id)
                 )
                 new.save()
-
+                
+                total_payment += new.amount*new.product.price
                 list_order.append(Order.objects.latest('id').id)
+            
 
             serializer = self.get_serializer(data={
                     "list": list_order,
+                    "total_payment": total_payment
                 }
             )
 

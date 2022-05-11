@@ -19,19 +19,20 @@ class OrderList(models.Model):
     list            = models.ManyToManyField(Order)
     order_time      = models.DateTimeField(auto_now_add=True)
     user            = models.ForeignKey('users.MyUser', on_delete=models.CASCADE)
-    
+    total_payment   = models.FloatField(default=0, blank=True)
+
     class Meta:
         ordering = ['-id']
 
-    @property
-    def total_payment(self):
-        payments_sum = 0
-        orders = self.list.all()
-        # for order in orders:
-        #     payments_sum += float(order.total_payment)
-        # print(payments_sum)
-        payments_sum=sum(orders.payment)
-        return payments_sum
+    # @property
+    # def total_payment(self):
+    #     payments_sum = 0
+    #     orders = self.list.all()
+    #     for order in orders:
+    #         payments_sum += order.payment
+    #     # print(payments_sum)
+    #     # payments_sum=sum(orders.payment)
+    #     return payments_sum
 
     def __str__(self) -> str:
         return f'{self.id} - buyurtma'

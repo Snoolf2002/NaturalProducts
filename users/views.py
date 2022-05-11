@@ -9,7 +9,6 @@ from users.serializers import  MyUserSerializer
 class MyUserViewSet(viewsets.ModelViewSet):
     serializer_class = MyUserSerializer
     queryset = MyUser.objects.all()
-    permissions_class = permissions.IsAuthenticated
     filter_backends     = [filters.SearchFilter]
     search_fields       = ['email', 'username']
 
@@ -20,3 +19,4 @@ class MyUserViewSet(viewsets.ModelViewSet):
             return MyUser.objects.all()
         else:
             return MyUser.objects.filter(id=user.id)        
+    
