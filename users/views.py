@@ -12,11 +12,11 @@ class MyUserViewSet(viewsets.ModelViewSet):
     filter_backends     = [filters.SearchFilter]
     search_fields       = ['email', 'username']
 
-    def get_queryset(self):
-        user = self.request.user
+    def get_permissions(self):
 
-        if user.is_staff:
-            return MyUser.objects.all()
+        if self.action == 'list':
+            permission_classes = [permissions.IsAdminUser]
         else:
-            return MyUser.objects.filter(id=user.id)        
+            permission_classes = [permissions.IsAuthenticated]
+        return [permission() for permission in permission_classes]    
     

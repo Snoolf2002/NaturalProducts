@@ -24,15 +24,5 @@ class OrderList(models.Model):
     class Meta:
         ordering = ['-id']
 
-    # @property
-    # def total_payment(self):
-    #     payments_sum = 0
-    #     orders = self.list.all()
-    #     for order in orders:
-    #         payments_sum += order.payment
-    #     # print(payments_sum)
-    #     # payments_sum=sum(orders.payment)
-    #     return payments_sum
-
     def __str__(self) -> str:
         return f'{self.id} - buyurtma'

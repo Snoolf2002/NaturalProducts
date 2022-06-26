@@ -2,11 +2,13 @@ from django.db import transaction
 
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.decorators import action
-from rest_framework import status
+from rest_framework import status, permissions
 from rest_framework.response import Response
 from rest_framework import filters
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.pagination import PageNumberPagination
+from django.contrib.postgres.search import TrigramSimilarity
+from django.db.models.functions import Greatest
 
 from shop.models import Catagory, Product, Order, OrderList
 from shop.serializers import CatagorySerializer, OrderListSerializer, OrderSerializer, ProductSerializer
@@ -19,26 +21,13 @@ class CatagoryViewSet(ModelViewSet):
     filter_backends     = [filters.SearchFilter]
     search_fields       = ['title']
     
-    def get_queryset(self):
-        user = self.request.user
+    def get_permissions(self):
 
-        if user.is_staff:
-            return Catagory.objects.all()
-    
-    def perform_create(self, serializer):   
-        user = self.request.user
-
-        if user.is_staff:
-            serializer.save()
-            return Response(serializer.data)
-    
-    def retrieve(self, request, *args, **kwargs):
-        user = self.request.user
-
-        if user.is_staff:
-            instance = self.get_object()
-            serializer = self.get_serializer(instance)
-            return Response(serializer.data)
+        if self.action == 'list':
+            permission_classes = [permissions.AllowAny]
+        else:
+            permission_classes = [permissions.IsAdminUser]
+        return [permission() for permission in permission_classes]
 
 
 class ProductViewSet(ModelViewSet):
@@ -99,7 +88,17 @@ class ProductViewSet(ModelViewSet):
         return Response(serializer.data)
 
     def get_queryset(self):
-        return Product.objects.all()
+        queryset = Product.objects.all()
+        query = self.request.query_params.get('search')
+
+        if query is not None:
+            queryset = Product.objects.annotate(
+                similarity=Greatest(
+                    TrigramSimilarity('title', query),
+                    TrigramSimilarity('catagory__title', query)
+                )
+            ).filter(similarity__gt=0.1).order_by('-similarity')
+        return queryset
 
     def perform_create(self, serializer):
         user = self.request.user
